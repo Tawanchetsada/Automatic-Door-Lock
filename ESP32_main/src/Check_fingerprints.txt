@@ -1,0 +1,56 @@
+#include <Arduino.h>
+#include <Adafruit_Fingerprint.h>
+
+HardwareSerial mySerial(1); // Serial1
+Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
+
+int getFingerprintIDez();
+
+void setup() {
+  Serial.begin(9600);
+  while (!Serial);
+  delay(100);
+  Serial.println("\n\nAdafruit finger detect test");
+  mySerial.begin(57600, SERIAL_8N1, 22, 23); // TX=16, RX=17
+  finger.begin(57600);
+  
+  if (finger.verifyPassword()) {
+    Serial.println("พบเซ็นเซอร์ลายนิ้วมือ!");
+  } else {
+    Serial.println("ไม่พบเซ็นเซอร์ลายนิ้วมือ :(");
+    while (1) { delay(1); }
+  }
+
+  finger.getTemplateCount();
+  Serial.print("เซ็นเซอร์มี "); Serial.print(finger.templateCount); Serial.println(" เทมเพลต");
+  Serial.println("รอลายนิ้วมือ...");
+}
+
+void loop() {
+  getFingerprintIDez();
+  delay(50);
+}
+
+int getFingerprintIDez() {
+  uint8_t p = finger.getImage();
+  if (p != FINGERPRINT_OK) {
+    Serial.println("ไม่พบลายนิ้วมือ");
+    return -1;
+  }
+
+  p = finger.image2Tz();
+  if (p != FINGERPRINT_OK) {
+    Serial.println("การแปลงภาพล้มเหลว");
+    return -1;
+  }
+
+  p = finger.fingerFastSearch();
+  if (p != FINGERPRINT_OK) {
+    Serial.println("ไม่พบข้อมูลในฐานข้อมูล");
+    return -1;
+  }
+
+  Serial.print("พบ ID #"); Serial.print(finger.fingerID); 
+  Serial.print(" ความแม่นยำ"); Serial.println(finger.confidence);
+  return finger.fingerID; 
+}

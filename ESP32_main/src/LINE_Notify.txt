@@ -1,0 +1,53 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+// WiFi credentials
+const char* ssid = "FFF";
+const char* password = "00000000";
+
+// LINE Notify credentials
+String token = "bdzhRhvjviI8qUbrQMj8K6wVLHmBajfhdhz11wPyFLU";
+String url = "https://notify-api.line.me/api/notify";
+
+void setup() {
+  Serial.begin(9600);
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting to WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected to WiFi");
+}
+
+void sendLineMessage(String message) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(url);
+
+    // Set headers
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+    http.addHeader("Authorization", "Bearer " + token);
+
+    // Send POST request
+    int httpResponseCode = http.POST("message=" + message);
+
+    // Print response
+    if (httpResponseCode > 0) {
+      Serial.print("HTTP Response code: ");
+      Serial.println(httpResponseCode);
+    } else {
+      Serial.print("Error on sending POST: ");
+      Serial.println(http.errorToString(httpResponseCode).c_str());
+    }
+    http.end();
+  } else {
+    Serial.println("WiFi Disconnected");
+  }
+}
+
+void loop() {
+  sendLineMessage("Hello from ESP32!"); // Message to LINE Notify
+  delay(10000); // Wait 10 seconds
+}
